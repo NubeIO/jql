@@ -92,7 +92,7 @@ func (thisParser *Parser) Evaluate(ts *Lifo, postfix bool) (string, error) {
 		//newTs.Print()
 	}
 	if !usefulWork {
-		return "", errors.New("Failed to evaluate: no valid operator found.")
+		return "", errors.New("failed to evaluate: no valid operator found")
 	}
 	if newTs.Len() == 1 {
 		return newTs.Pop().(string), nil
