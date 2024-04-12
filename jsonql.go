@@ -2,7 +2,6 @@ package jsonql
 
 import (
 	"encoding/json"
-	"fmt"
 	"strconv"
 )
 
@@ -12,8 +11,9 @@ type JQL struct {
 }
 
 type Result struct {
-	Response interface{}
-	Count    int
+	Response interface{} `json:"response"`
+	Error    string      `json:"error"`
+	Count    int         `json:"count"`
 }
 
 func New() *JQL {
@@ -38,14 +38,14 @@ func (j *JQL) NewData(data interface{}) *JQL {
 }
 
 // Query - queries against the JSON using the conditions specified in the where stirng.
-func (j *JQL) Query(where string) (*Result, error) {
+func (j *JQL) Query(where string) *Result {
 	parser := &Parser{
 		Operators: sqlOperators,
 	}
 	tokens := parser.Tokenize(where)
 	rpn, err := parser.ParseRPN(tokens)
 	if err != nil {
-		return nil, err
+		return &Result{Error: err.Error()}
 	}
 	count := 0
 
@@ -56,26 +56,26 @@ func (j *JQL) Query(where string) (*Result, error) {
 			parser.SymbolTable = obj
 			r, err := j.processObj(parser, *rpn)
 			if err != nil {
-				return nil, err
+				return &Result{Error: err.Error()}
 			}
 			if r {
 				ret = append(ret, obj)
 				count++
 			}
 		}
-		return &Result{Response: ret, Count: count}, nil
+		return &Result{Response: ret, Count: count}
 	case map[string]interface{}:
 		parser.SymbolTable = v
 		r, err := j.processObj(parser, *rpn)
 		if err != nil {
-			return nil, err
+			return &Result{Error: err.Error()}
 		}
 		if r {
-			return &Result{Response: v, Count: 1}, nil
+			return &Result{Response: v, Count: 1}
 		}
-		return nil, nil
+		return nil
 	default:
-		return nil, fmt.Errorf("failed to parse input data")
+		return &Result{Error: "failed to parse input data"}
 	}
 }
 
